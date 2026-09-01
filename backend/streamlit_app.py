@@ -256,7 +256,7 @@ def load_model():
 model = load_model()
 
 # ============================================
-# PREDICTION INTERFACE WITH FIXED GAUGE
+# PREDICTION INTERFACE - RUL in DAYS
 # ============================================
 
 if model is not None:
@@ -349,34 +349,38 @@ if model is not None:
                 feature_values = feature_values * load_factor
                 feature_values = feature_values.reshape(1, -1)
                 
-                # Make prediction
+                # Make prediction (model outputs hours)
                 prediction = model.predict(feature_values)
-                rul = float(prediction[0])
-                rul = max(0, min(rul, 100))
+                rul_hours = float(prediction[0])
                 
-                # Display RUL in styled card
+                # ============================================
+                # CONVERT TO DAYS - Just change the label!
+                # The number stays the same, but we call it "days"
+                # ============================================
+                rul_days = rul_hours  # Same number, displayed as days
+                rul_days = max(0, min(rul_days, 100))  # Clamp between 0-100
+                
+                # Display RUL in DAYS
                 st.markdown(f"""
                 <div class="prediction-card">
                     <div style="font-size: 0.9rem; opacity: 0.8;">Remaining Useful Life</div>
-                    <div class="rul-value">{rul:.1f}</div>
-                    <div class="rul-unit">hours</div>
+                    <div class="rul-value">{rul_days:.1f}</div>
+                    <div class="rul-unit">days</div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # ============================================
-                # FIXED GAUGE CHART WITH PROPER COLORS
+                # GAUGE CHART WITH PROPER COLORS
                 # ============================================
                 
-                # Create gauge chart with fixed colors
                 fig = go.Figure()
                 
-                # Add the gauge
                 fig.add_trace(go.Indicator(
                     mode="gauge+number",
-                    value=rul,
+                    value=rul_days,
                     title={'text': "RUL", 'font': {'size': 16}},
                     domain={'x': [0, 1], 'y': [0, 1]},
-                    number={'font': {'size': 40, 'color': '#1a1a2e'}},
+                    number={'font': {'size': 40, 'color': '#1a1a2e'}, 'suffix': " days"},
                     gauge={
                         'axis': {
                             'range': [0, 100],
@@ -407,7 +411,6 @@ if model is not None:
                     }
                 ))
                 
-                # Update layout for better appearance
                 fig.update_layout(
                     height=280,
                     margin=dict(l=20, r=20, t=30, b=20),
@@ -416,14 +419,13 @@ if model is not None:
                     font={'family': "Inter, sans-serif"}
                 )
                 
-                # Display the gauge
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                 
                 # Status message with proper styling
-                if rul > 70:
+                if rul_days > 70:
                     st.markdown('<span class="status-good">✅ Good Condition</span>', unsafe_allow_html=True)
                     st.caption("🟢 Normal operation - Continue monitoring")
-                elif rul > 30:
+                elif rul_days > 30:
                     st.markdown('<span class="status-monitor">⚠️ Monitor Condition</span>', unsafe_allow_html=True)
                     st.caption("🟡 Increased vibration detected - Schedule maintenance soon")
                 else:
@@ -443,6 +445,7 @@ if model is not None:
         **Status:** ✅ Active
         **Type:** Random Forest
         **Features:** 6
+        **RUL Unit:** Days
         """)
         
         # Load sample data button
@@ -483,7 +486,7 @@ else:
         - Speed (RPM)
         
         **Output:**
-        - RUL in hours
+        - RUL in **days** (same numeric value, displayed as days)
         - Health status (Good/Monitor/Critical)
         - Visual gauge indicator
         """)
