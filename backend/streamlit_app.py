@@ -37,16 +37,13 @@ with st.sidebar:
                 
                 if not os.path.exists(data_path):
                     st.info("Generating sample data...")
-                    # Create synthetic data
                     np.random.seed(42)
                     n_samples = 1000
                     X = np.random.randn(n_samples, 6)
-                    # Create RUL based on features (synthetic relationship)
                     y = 100 - (X[:, 0] * 20 + X[:, 1] * 15 + X[:, 2] * 10 + 
                               X[:, 3] * 5 + X[:, 4] * 5 + X[:, 5] * 3)
-                    y = np.maximum(y, 0)  # RUL can't be negative
+                    y = np.maximum(y, 0)
                     
-                    # Save sample data
                     os.makedirs('backend/data', exist_ok=True)
                     df = pd.DataFrame(X, columns=['Vibration_X', 'Vibration_Y', 'Vibration_Z', 
                                                    'Temperature', 'Pressure', 'Speed'])
@@ -71,7 +68,7 @@ with st.sidebar:
                 os.makedirs('backend/models', exist_ok=True)
                 joblib.dump(model, model_path)
                 st.success("✅ Model trained and saved!")
-                st.rerun()  # ← FIXED: Use st.rerun() instead of experimental_rerun()
+                st.rerun()
                 
             except Exception as e:
                 st.error(f"❌ Error training model: {e}")
@@ -89,21 +86,22 @@ def load_model():
 
 model = load_model()
 
-# Main app
+# Main app - THIS IS THE IMPORTANT PART WITH THE INPUT FIELDS
 if model is not None:
     st.success("✅ Model ready for predictions")
     
-    # Create input columns
+    # Create two columns: left for input, right for predictions
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.subheader("📊 Sensor Input")
         
-        # Input features
+        # Input features - these are the fields you need to fill
         features = {}
         feature_names = ['Vibration_X', 'Vibration_Y', 'Vibration_Z', 
                         'Temperature', 'Pressure', 'Speed']
         
+        # Create 3 columns for better layout
         cols = st.columns(3)
         for i, name in enumerate(feature_names):
             with cols[i % 3]:
@@ -137,7 +135,7 @@ if model is not None:
                 # Make prediction
                 prediction = model.predict(feature_values)
                 rul = float(prediction[0])
-                rul = max(0, min(rul, 100))  # Clamp between 0-100 for visualization
+                rul = max(0, min(rul, 100))
                 
                 # Display metrics
                 st.metric("Remaining Useful Life", f"{rul:.2f} hours")
@@ -179,7 +177,7 @@ if model is not None:
             except Exception as e:
                 st.error(f"❌ Error making prediction: {e}")
     
-    # Display model info
+    # Model info in sidebar
     with st.sidebar:
         st.markdown("---")
         st.subheader("ℹ️ Model Info")
@@ -187,11 +185,10 @@ if model is not None:
         **Status:** ✅ Active
         **Type:** Random Forest
         **Features:** {len(feature_names)}
-        **Port:** Optimized
         """)
         
-        # Sample predictions
-        if st.button("📊 Show Sample Prediction"):
+        # Sample data button
+        if st.button("📊 Load Sample Data"):
             sample = {
                 'Vibration_X': 2.5,
                 'Vibration_Y': 1.8,
@@ -203,10 +200,10 @@ if model is not None:
             for name in feature_names:
                 features[name] = sample[name]
             st.success("Sample values loaded!")
-            st.rerun()  # ← FIXED: Use st.rerun() instead of experimental_rerun()
-    
+            st.rerun()
+
+# Show instructions if no model
 else:
-    # Show instructions if no model
     st.warning("""
     ### ⚠️ No trained model found
     
