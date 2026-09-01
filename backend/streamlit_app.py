@@ -180,7 +180,7 @@ def load_model():
 model = load_model()
 
 # ============================================
-# PREDICTION INTERFACE WITH UNITS
+# PREDICTION INTERFACE WITH UNITS (FIXED)
 # ============================================
 
 if model is not None:
@@ -195,13 +195,14 @@ if model is not None:
         st.subheader("📊 Sensor Input")
         
         # Define features with their units and default values
+        # All steps are now floats to avoid type errors
         feature_configs = [
             {'name': 'Vibration_X', 'label': 'Vibration X', 'unit': 'mm/s', 'default': 0.0, 'step': 0.1},
             {'name': 'Vibration_Y', 'label': 'Vibration Y', 'unit': 'mm/s', 'default': 0.0, 'step': 0.1},
             {'name': 'Vibration_Z', 'label': 'Vibration Z', 'unit': 'mm/s', 'default': 0.0, 'step': 0.1},
             {'name': 'Temperature', 'label': 'Temperature', 'unit': '°C', 'default': 25.0, 'step': 0.5},
             {'name': 'Pressure', 'label': 'Pressure', 'unit': 'bar', 'default': 1.0, 'step': 0.1},
-            {'name': 'Speed', 'label': 'Speed', 'unit': 'RPM', 'default': 1500.0, 'step': 10},
+            {'name': 'Speed', 'label': 'Speed', 'unit': 'RPM', 'default': 1500.0, 'step': 10.0},  # <-- FIXED: float
         ]
         
         # Dictionary to store feature values
