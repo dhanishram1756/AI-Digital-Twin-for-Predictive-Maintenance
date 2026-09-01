@@ -190,7 +190,7 @@ with st.sidebar:
         st.warning("⚠️ No model found")
         
         # Option to train model
-        if st.button("🔄 Train Model Now", type="primary"):
+        if st.button("Train Model Now", type="primary"):
             st.info("Training model... (this may take a moment)")
             
             try:
@@ -335,9 +335,9 @@ if model is not None:
     
     with col2:
         # Prediction section - no white bar
-        st.markdown('<div class="section-title">📈 Prediction</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Prediction</div>', unsafe_allow_html=True)
         
-        if st.button("🚀 Predict RUL", type="primary", use_container_width=True):
+        if st.button("Predict RUL", type="primary", use_container_width=True):
             try:
                 # Prepare features
                 feature_names = [c['name'] for c in feature_configs]
@@ -461,7 +461,7 @@ if model is not None:
         """)
         
         # Load sample data button
-        if st.button("📊 Load Sample Data"):
+        if st.button("Load Sample Data"):
             sample = {
                 'Vibration_X': 2.5,
                 'Vibration_Y': 1.8,
@@ -487,7 +487,7 @@ else:
     3. Start making predictions!
     """)
     
-    with st.expander("📖 How it works"):
+    with st.expander("How it works"):
         st.markdown("""
         **This app predicts bearing Remaining Useful Life (RUL) using sensor data.**
         
