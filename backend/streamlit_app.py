@@ -79,29 +79,34 @@ def load_model():
     try:
         model_path = 'backend/models/bearing_model.pkl'
         if os.path.exists(model_path):
-            return joblib.load(model_path)
+            model = joblib.load(model_path)
+            return model
     except Exception as e:
         st.error(f"Error loading model: {e}")
     return None
 
 model = load_model()
 
-# Main app - THIS IS THE IMPORTANT PART WITH THE INPUT FIELDS
+# ============================================
+# THE IMPORTANT PART - PREDICTION INTERFACE
+# This is what shows the sliders and inputs!
+# ============================================
+
 if model is not None:
     st.success("✅ Model ready for predictions")
     
-    # Create two columns: left for input, right for predictions
+    # Create two columns
     col1, col2 = st.columns([2, 1])
     
     with col1:
         st.subheader("📊 Sensor Input")
         
-        # Input features - these are the fields you need to fill
+        # Input features
         features = {}
         feature_names = ['Vibration_X', 'Vibration_Y', 'Vibration_Z', 
                         'Temperature', 'Pressure', 'Speed']
         
-        # Create 3 columns for better layout
+        # Create 3 columns for input fields
         cols = st.columns(3)
         for i, name in enumerate(feature_names):
             with cols[i % 3]:
@@ -113,16 +118,24 @@ if model is not None:
                     help=f"Enter {name} reading"
                 )
         
-        # Load simulation
+        # Load simulation slider - THIS IS THE SLIDER YOU WANT!
         st.subheader("⚙️ Load Simulation")
-        load_factor = st.slider("Load Factor", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
+        load_factor = st.slider(
+            "Load Factor", 
+            min_value=0.5, 
+            max_value=2.0, 
+            value=1.0, 
+            step=0.1,
+            help="Simulate different load conditions"
+        )
         
         if load_factor != 1.0:
-            st.info(f"Load factor {load_factor:.1f}x applied to all sensor values")
+            st.info(f"⚠️ Load factor {load_factor:.1f}x applied - sensor values will be scaled")
     
     with col2:
         st.subheader("📈 Prediction")
         
+        # Predict button
         if st.button("🚀 Predict RUL", type="primary", use_container_width=True):
             try:
                 # Prepare features
@@ -135,9 +148,9 @@ if model is not None:
                 # Make prediction
                 prediction = model.predict(feature_values)
                 rul = float(prediction[0])
-                rul = max(0, min(rul, 100))
+                rul = max(0, min(rul, 100))  # Clamp between 0-100
                 
-                # Display metrics
+                # Display RUL
                 st.metric("Remaining Useful Life", f"{rul:.2f} hours")
                 
                 # Gauge chart
@@ -163,7 +176,7 @@ if model is not None:
                 ))
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Status
+                # Status messages
                 if rul > 70:
                     st.success("✅ Bearing condition: **Good**")
                     st.info("🟢 Normal operation - Continue monitoring")
@@ -177,7 +190,7 @@ if model is not None:
             except Exception as e:
                 st.error(f"❌ Error making prediction: {e}")
     
-    # Model info in sidebar
+    # Sidebar info
     with st.sidebar:
         st.markdown("---")
         st.subheader("ℹ️ Model Info")
@@ -187,7 +200,7 @@ if model is not None:
         **Features:** {len(feature_names)}
         """)
         
-        # Sample data button
+        # Load sample data button
         if st.button("📊 Load Sample Data"):
             sample = {
                 'Vibration_X': 2.5,
@@ -199,26 +212,34 @@ if model is not None:
             }
             for name in feature_names:
                 features[name] = sample[name]
-            st.success("Sample values loaded!")
+            st.success("✅ Sample values loaded!")
             st.rerun()
 
-# Show instructions if no model
 else:
+    # Show instructions if no model
     st.warning("""
     ### ⚠️ No trained model found
     
     **To get started:**
-    1. Click "Train Model Now" in the sidebar
-    2. Or upload your own training data
-    3. Or add a pre-trained model to `backend/models/bearing_model.pkl`
+    1. Click **"Train Model Now"** in the sidebar
+    2. Wait for training to complete (10-15 seconds)
+    3. Start making predictions!
     """)
     
-    with st.expander("📖 How to add training data"):
+    with st.expander("📖 How it works"):
         st.markdown("""
-        **Training data should be a CSV file with:**
-        - Columns: `Vibration_X`, `Vibration_Y`, `Vibration_Z`, `Temperature`, `Pressure`, `Speed`
-        - Target column: `RUL` (Remaining Useful Life)
-        - Location: `backend/data/training_data.csv`
+        **This app predicts bearing Remaining Useful Life (RUL) using sensor data.**
+        
+        **Input features:**
+        - Vibration X, Y, Z (mm/s)
+        - Temperature (°C)
+        - Pressure (bar)
+        - Speed (RPM)
+        
+        **Output:**
+        - RUL in hours
+        - Health status (Good/Monitor/Critical)
+        - Visual gauge indicator
         """)
 
 # Footer
