@@ -11,16 +11,16 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Bearing RUL Prediction", layout="wide")
 
 # ============================================
-# CUSTOM CSS - Your original HTML styling
+# CUSTOM CSS - Clean styling without extra bars
 # ============================================
 st.markdown("""
 <style>
-    /* Import your fonts */
+    /* Import fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     /* Main container */
     .main {
-        padding: 2rem;
+        padding: 1rem;
         font-family: 'Inter', sans-serif;
     }
     
@@ -31,34 +31,24 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         font-weight: 700;
         color: #1a1a2e;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.2rem;
     }
     
     .sub-header {
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: #666;
         font-weight: 400;
-        margin-bottom: 2rem;
-    }
-    
-    /* Card containers */
-    .card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid #e8ecf1;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
     
     /* Input labels with units */
     .input-container {
         display: flex;
         flex-direction: column;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.2rem;
     }
     
     .input-label {
@@ -66,16 +56,16 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         font-weight: 500;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #333;
         margin-bottom: 2px;
     }
     
     .unit-badge {
         background: #f0f2f6;
-        padding: 2px 10px;
-        border-radius: 12px;
-        font-size: 0.7rem;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 0.65rem;
         color: #666;
         font-weight: 500;
     }
@@ -83,53 +73,53 @@ st.markdown("""
     /* Prediction result styling */
     .prediction-card {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 16px;
-        padding: 1.5rem;
+        border-radius: 12px;
+        padding: 1.2rem;
         color: white;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.8rem;
     }
     
     .rul-value {
-        font-size: 3rem;
+        font-size: 2.8rem;
         font-weight: 700;
-        margin: 0.3rem 0;
+        margin: 0.2rem 0;
     }
     
     .rul-unit {
-        font-size: 1rem;
+        font-size: 0.9rem;
         opacity: 0.8;
     }
     
-    /* Status badges - matching your HTML */
+    /* Status badges */
     .status-good {
         background: #d4edda;
         color: #155724;
-        padding: 8px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-weight: 600;
         display: inline-block;
-        border: 1px solid #c3e6cb;
+        font-size: 0.9rem;
     }
     
     .status-monitor {
         background: #fff3cd;
         color: #856404;
-        padding: 8px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-weight: 600;
         display: inline-block;
-        border: 1px solid #ffeeba;
+        font-size: 0.9rem;
     }
     
     .status-critical {
         background: #f8d7da;
         color: #721c24;
-        padding: 8px 16px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-weight: 600;
         display: inline-block;
-        border: 1px solid #f5c6cb;
+        font-size: 0.9rem;
     }
     
     /* Button styling */
@@ -138,7 +128,7 @@ st.markdown("""
         color: white !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        padding: 0.6rem 1.5rem !important;
+        padding: 0.5rem 1rem !important;
         border: none !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
@@ -150,30 +140,34 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(26,26,46,0.3);
     }
     
-    /* Metric styling */
-    [data-testid="metric-container"] {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border: 1px solid #e8ecf1;
+    /* Remove extra spacing */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
     }
     
-    /* Sidebar */
-    .css-1d391kg {
-        background: #f8f9fa;
+    /* Remove white bars - hide subheader lines */
+    .css-1offfwp h2, .css-1offfwp h3 {
+        border-bottom: none !important;
     }
     
-    /* Number input styling */
-    .stNumberInput input {
-        border-radius: 8px !important;
-        border: 1px solid #e8ecf1 !important;
-        padding: 0.5rem !important;
+    /* Custom section titles without bars */
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 0.8rem;
+        margin-top: 0.2rem;
     }
     
     /* Slider styling */
     .stSlider {
-        padding-top: 0.5rem !important;
+        padding-top: 0.2rem !important;
+    }
+    
+    /* Remove extra space in columns */
+    .css-1r6slb0 {
+        gap: 0.5rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -256,7 +250,7 @@ def load_model():
 model = load_model()
 
 # ============================================
-# PREDICTION INTERFACE - RUL in DAYS
+# PREDICTION INTERFACE - NO WHITE BARS
 # ============================================
 
 if model is not None:
@@ -266,9 +260,8 @@ if model is not None:
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Card container
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("📊 Sensor Input")
+        # Sensor Input section - no white bar
+        st.markdown('<div class="section-title">📊 Sensor Input</div>', unsafe_allow_html=True)
         
         # Define features with their units
         feature_configs = [
@@ -306,11 +299,8 @@ if model is not None:
                     help=f"Enter {config['label']} in {config['unit']}"
                 )
         
-        st.markdown('</div>', unsafe_allow_html=True)  # Close card
-        
-        # Load simulation slider
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("⚙️ Load Simulation")
+        # Load simulation section - no white bar
+        st.markdown('<div class="section-title" style="margin-top: 1rem;">⚙️ Load Simulation</div>', unsafe_allow_html=True)
         
         st.markdown("""
         <div class="input-container">
@@ -323,42 +313,66 @@ if model is not None:
         
         load_factor = st.slider(
             label="",
-            min_value=0.5,
-            max_value=2.0,
+            min_value=0.0,      # Start from 0
+            max_value=3.0,      # Go up to 3x
             value=1.0,
             step=0.1,
             format="%.1fx",
-            help="Simulate different load conditions"
+            help="Simulate different load conditions (0x = no load, 1x = normal, 3x = maximum)"
         )
         
-        if load_factor != 1.0:
-            st.info(f"⚠️ Load factor {load_factor:.1f}x applied - sensor values will be scaled")
-        st.markdown('</div>', unsafe_allow_html=True)  # Close card
+        # Show current load status
+        if load_factor < 0.5:
+            st.info("🔹 Light load condition")
+        elif load_factor < 0.8:
+            st.info("🔸 Normal load condition")
+        elif load_factor < 1.5:
+            st.info("🔶 Moderate load condition")
+        elif load_factor < 2.0:
+            st.warning("🔺 Heavy load condition")
+        else:
+            st.error("⛔ Extreme load condition - Bearing stress high!")
     
     with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("📈 Prediction")
+        # Prediction section - no white bar
+        st.markdown('<div class="section-title">📈 Prediction</div>', unsafe_allow_html=True)
         
         if st.button("🚀 Predict RUL", type="primary", use_container_width=True):
             try:
                 # Prepare features
                 feature_names = [c['name'] for c in feature_configs]
-                feature_values = np.array([features[name] for name in feature_names])
+                base_features = np.array([features[name] for name in feature_names])
                 
-                # Apply load factor
-                feature_values = feature_values * load_factor
-                feature_values = feature_values.reshape(1, -1)
+                # ============================================
+                # FIXED: Properly apply load factor
+                # Scale the sensor values based on load factor
+                # ============================================
+                # For vibration: increases with load
+                vibration_multiplier = 1.0 + (load_factor - 1.0) * 0.5
+                # For temperature: increases with load
+                temp_multiplier = 1.0 + (load_factor - 1.0) * 0.3
+                # For pressure: increases with load
+                pressure_multiplier = load_factor
+                # For speed: slightly affected by load
+                speed_multiplier = 1.0 + (load_factor - 1.0) * 0.1
+                
+                # Apply different multipliers to different features
+                scaled_features = base_features.copy()
+                scaled_features[0] *= vibration_multiplier  # Vibration_X
+                scaled_features[1] *= vibration_multiplier  # Vibration_Y
+                scaled_features[2] *= vibration_multiplier  # Vibration_Z
+                scaled_features[3] *= temp_multiplier       # Temperature
+                scaled_features[4] *= pressure_multiplier   # Pressure
+                scaled_features[5] *= speed_multiplier      # Speed
+                
+                scaled_features = scaled_features.reshape(1, -1)
                 
                 # Make prediction (model outputs hours)
-                prediction = model.predict(feature_values)
+                prediction = model.predict(scaled_features)
                 rul_hours = float(prediction[0])
                 
-                # ============================================
-                # CONVERT TO DAYS - Just change the label!
-                # The number stays the same, but we call it "days"
-                # ============================================
-                rul_days = rul_hours  # Same number, displayed as days
-                rul_days = max(0, min(rul_days, 100))  # Clamp between 0-100
+                # Convert to days (same number, different label)
+                rul_days = max(0, min(rul_hours, 100))
                 
                 # Display RUL in DAYS
                 st.markdown(f"""
@@ -370,7 +384,7 @@ if model is not None:
                 """, unsafe_allow_html=True)
                 
                 # ============================================
-                # GAUGE CHART WITH PROPER COLORS
+                # ACCURATE GAUGE CHART
                 # ============================================
                 
                 fig = go.Figure()
@@ -378,42 +392,42 @@ if model is not None:
                 fig.add_trace(go.Indicator(
                     mode="gauge+number",
                     value=rul_days,
-                    title={'text': "RUL", 'font': {'size': 16}},
+                    title={'text': "RUL", 'font': {'size': 14}},
                     domain={'x': [0, 1], 'y': [0, 1]},
-                    number={'font': {'size': 40, 'color': '#1a1a2e'}, 'suffix': " days"},
+                    number={'font': {'size': 32, 'color': '#1a1a2e'}, 'suffix': " days"},
                     gauge={
                         'axis': {
                             'range': [0, 100],
                             'tickwidth': 1,
                             'tickcolor': "#1a1a2e",
-                            'tickfont': {'size': 12}
+                            'tickfont': {'size': 10}
                         },
                         'bar': {
                             'color': "#1a1a2e",
                             'thickness': 0.3
                         },
-                        'bgcolor': "white",
-                        'borderwidth': 2,
+                        'bgcolor': "#f8f9fa",
+                        'borderwidth': 1,
                         'bordercolor': "#e8ecf1",
                         'steps': [
-                            {'range': [0, 30], 'color': '#dc3545', 'name': 'Critical'},
-                            {'range': [30, 70], 'color': '#ffc107', 'name': 'Monitor'},
-                            {'range': [70, 100], 'color': '#28a745', 'name': 'Good'}
+                            {'range': [0, 30], 'color': 'rgba(220, 53, 69, 0.8)'},
+                            {'range': [30, 70], 'color': 'rgba(255, 193, 7, 0.8)'},
+                            {'range': [70, 100], 'color': 'rgba(40, 167, 69, 0.8)'}
                         ],
                         'threshold': {
                             'line': {
                                 'color': "red",
-                                'width': 4
+                                'width': 3
                             },
-                            'thickness': 0.75,
+                            'thickness': 0.6,
                             'value': 90
                         }
                     }
                 ))
                 
                 fig.update_layout(
-                    height=280,
-                    margin=dict(l=20, r=20, t=30, b=20),
+                    height=250,
+                    margin=dict(l=15, r=15, t=25, b=15),
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='rgba(0,0,0,0)',
                     font={'family': "Inter, sans-serif"}
@@ -421,26 +435,24 @@ if model is not None:
                 
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                 
-                # Status message with proper styling
+                # Status message
                 if rul_days > 70:
                     st.markdown('<span class="status-good">✅ Good Condition</span>', unsafe_allow_html=True)
                     st.caption("🟢 Normal operation - Continue monitoring")
                 elif rul_days > 30:
                     st.markdown('<span class="status-monitor">⚠️ Monitor Condition</span>', unsafe_allow_html=True)
-                    st.caption("🟡 Increased vibration detected - Schedule maintenance soon")
+                    st.caption("🟡 Schedule maintenance soon")
                 else:
                     st.markdown('<span class="status-critical">❌ Critical Condition</span>', unsafe_allow_html=True)
                     st.caption("🔴 Immediate maintenance required!")
                 
             except Exception as e:
                 st.error(f"❌ Error making prediction: {e}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)  # Close card
     
     # Sidebar info
     with st.sidebar:
         st.markdown("---")
-        st.subheader("ℹ️ Model Info")
+        st.markdown("### ℹ️ Model Info")
         st.info(f"""
         **Status:** ✅ Active
         **Type:** Random Forest
@@ -486,7 +498,7 @@ else:
         - Speed (RPM)
         
         **Output:**
-        - RUL in **days** (same numeric value, displayed as days)
+        - RUL in **days**
         - Health status (Good/Monitor/Critical)
         - Visual gauge indicator
         """)
