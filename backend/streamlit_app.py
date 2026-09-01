@@ -71,7 +71,7 @@ with st.sidebar:
                 os.makedirs('backend/models', exist_ok=True)
                 joblib.dump(model, model_path)
                 st.success("✅ Model trained and saved!")
-                st.experimental_rerun()
+                st.rerun()  # ← FIXED: Use st.rerun() instead of experimental_rerun()
                 
             except Exception as e:
                 st.error(f"❌ Error training model: {e}")
@@ -203,7 +203,7 @@ if model is not None:
             for name in feature_names:
                 features[name] = sample[name]
             st.success("Sample values loaded!")
-            st.experimental_rerun()
+            st.rerun()  # ← FIXED: Use st.rerun() instead of experimental_rerun()
     
 else:
     # Show instructions if no model
