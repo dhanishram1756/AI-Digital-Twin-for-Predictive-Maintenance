@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Digital Twin - Predictive Maintenance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0A0A0A;
+            color: #E8E8E8;
+        }
+
+        /* MATLAB-style scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1A1A1A; }
+        ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3A3A3A; }
+
+        .matlab-panel {
+            background: #141414;
+            border: 1px solid #2A2A2A;
+            border-radius: 0px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .matlab-panel-light {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 0px;
+        }
+
+        .matlab-header {
+            background: #0D0D0D;
+            border-bottom: 1px solid #2A2A2A;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            user-select: none;
+            font-weight: 600;
+        }
+
+        .matlab-input {
+            background: #0D0D0D;
+            border: 1px solid #2A2A2A;
+            color: #E8E8E8;
+            padding: 6px 10px;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .matlab-input:focus {
+            border-color: #3B82F6;
+        }
+
+        .matlab-btn {
+            background: #1A3A5C;
+            border: 1px solid #2A5A8C;
+            color: #8BB8E8;
+            padding: 8px 20px;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .matlab-btn:hover {
+            background: #2A4A6C;
+            border-color: #3A7AAC;
+            color: #AAC8E8;
+        }
+        .matlab-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .matlab-btn-sim {
+            background: #4A3A1A;
+            border: 1px solid #8A6A2A;
+            color: #E8C86A;
+        }
+        .matlab-btn-sim:hover {
+            background: #5A4A2A;
+            border-color: #AA8A3A;
+            color: #F0D87A;
+        }
+
+        .matlab-btn-danger {
+            background: #4A1A1A;
+            border: 1px solid #8A2A2A;
+            color: #E86A6A;
+        }
+        .matlab-btn-danger:hover {
+            background: #5A2A2A;
+            border-color: #AA3A3A;
+            color: #F07A7A;
+        }
+
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 3px;
+            background: #2A2A2A;
+            border-radius: 0px;
+            outline: none;
+            width: 100%;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #3B82F6;
+            border-radius: 0px;
+            cursor: pointer;
+            border: 1px solid #1A1A1A;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #3B82F6;
+            border-radius: 0px;
+            cursor: pointer;
+            border: 1px solid #1A1A1A;
+        }
+
+        .sensor-card {
+            background: #0D0D0D;
+            border: 1px solid #1A1A1A;
+            padding: 8px 12px;
+            transition: border-color 0.3s;
+        }
+        .sensor-card:hover {
+            border-color: #2A2A2A;
+        }
+
+        /* ============================================
+           BEARING VISUALIZATION - SVG
+           ============================================ */
+        .bearing-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background: #0A0A0A;
+            border: 1px solid #1A1A1A;
+            min-height: 260px;
+        }
+
+        .bearing-svg {
+            width: 200px;
+            height: 220px;
+        }
+
+        /* Status colors */
+        .status-critical { color: #DC2626; border-color: #DC2626; background: rgba(220,38,38,0.05); }
+        .status-warning { color: #F59E0B; border-color: #F59E0B; background: rgba(245,158,11,0.05); }
+        .status-healthy { color: #3B82F6; border-color: #3B82F6; background: rgba(59,130,246,0.05); }
+
+        /* Day counter - Helvetica */
+        .day-number {
+            font-size: 72px;
+            font-weight: 800;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1;
+            letter-spacing: -2px;
+            transition: color 0.5s ease;
+        }
+        .day-number.healthy { color: #3B82F6; }
+        .day-number.warning { color: #F59E0B; }
+        .day-number.critical { color: #DC2626; }
+
+        .day-label {
+            font-size: 11px;
+            color: #666;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 14px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: 1px solid;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+        }
+        .status-badge.healthy { color: #3B82F6; border-color: #3B82F6; background: rgba(59,130,246,0.05); }
+        .status-badge.warning { color: #F59E0B; border-color: #F59E0B; background: rgba(245,158,11,0.05); }
+        .status-badge.critical { color: #DC2626; border-color: #DC2626; background: rgba(220,38,38,0.05); }
+
+        .sim-badge {
+            font-size: 9px;
+            color: #F59E0B;
+            border: 1px solid rgba(245,158,11,0.2);
+            padding: 2px 10px;
+            background: rgba(245,158,11,0.05);
+            animation: pulse 1.5s infinite;
+            font-weight: 600;
+        }
+
+        /* Bar gauge */
+        .bar-track {
+            width: 100%;
+            height: 6px;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            transition: width 1.5s ease-in-out, background 0.5s ease;
+            width: 0%;
+        }
+        .bar-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #555;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .matlab-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        /* Command window style - Helvetica */
+        .command-output {
+            background: #0A0A0A;
+            border: 1px solid #1A1A1A;
+            padding: 8px 12px;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-size: 12px;
+            color: #8BB8E8;
+            min-height: 60px;
+            max-height: 80px;
+            overflow-y: auto;
+            font-weight: 400;
+        }
+        .command-output .prompt {
+            color: #4A7A4A;
+        }
+        .command-output .error {
+            color: #DC2626;
+        }
+        .command-output .success {
+            color: #4AAC4A;
+        }
+        .command-output .warning-text {
+            color: #F59E0B;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .day-number { font-size: 48px; }
+            .bearing-svg { width: 150px; height: 170px; }
+        }
+
+        /* Additional Helvetica overrides */
+        .helvetica {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+        }
+
+        .sensor-label {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .sensor-value {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: #8BB8E8;
+        }
+
+        .sensor-unit {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-weight: 400;
+            font-size: 9px;
+            color: #555;
+        }
+
+        /* ============================================
+           FUTURISTIC HEADER STYLES
+           ============================================ */
+        
+        /* Animated gradient border */
+        .futuristic-header {
+            background: #0A0A0A;
+            border: 1px solid transparent;
+            position: relative;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .futuristic-header::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 0px;
+            padding: 1px;
+            background: linear-gradient(90deg, 
+                #00D4FF, 
+                #7B2FBE, 
+                #FF6B6B, 
+                #00D4FF
+            );
+            background-size: 300% 100%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: borderFlow 4s linear infinite;
+        }
+
+        @keyframes borderFlow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 300% 0%; }
+        }
+
+        /* Glow effect behind text */
+        .futuristic-title {
+            font-family: 'Orbitron', 'Helvetica Neue', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, #00D4FF, #7B2FBE, #FF6B6B);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+            position: relative;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .futuristic-title .bracket {
+            color: #00D4FF;
+            -webkit-text-fill-color: #00D4FF;
+            font-weight: 300;
+            opacity: 0.6;
+        }
+
+        .futuristic-title .chevron {
+            color: #7B2FBE;
+            -webkit-text-fill-color: #7B2FBE;
+            font-weight: 300;
+        }
+
+        /* Subtle typing cursor effect */
+        .futuristic-title::after {
+            content: '▌';
+            font-family: 'Orbitron', monospace;
+            color: #00D4FF;
+            -webkit-text-fill-color: #00D4FF;
+            animation: blink 1s step-end infinite;
+            font-size: 18px;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Futuristic status indicators */
+        .futuristic-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 4px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .futuristic-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00D4FF;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .futuristic-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            animation: ripple 2s infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        .futuristic-label {
+            font-family: 'Orbitron', 'Helvetica Neue', sans-serif;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: rgba(0, 212, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        .futuristic-divider {
+            color: rgba(0, 212, 255, 0.15);
+            font-size: 16px;
+            font-weight: 100;
+        }
+
+        .futuristic-tag {
+            font-family: 'Orbitron', 'Helvetica Neue', sans-serif;
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(123, 47, 190, 0.5);
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border: 1px solid rgba(123, 47, 190, 0.15);
+            background: rgba(123, 47, 190, 0.05);
+        }
+
+        /* Holographic scan line effect */
+        .futuristic-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+            animation: scanLine 3s ease-in-out infinite;
+        }
+
+        @keyframes scanLine {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        /* Responsive futuristic header */
+        @media (max-width: 640px) {
+            .futuristic-title {
+                font-size: 16px;
+                letter-spacing: 2px;
+            }
+            .futuristic-title::after {
+                font-size: 14px;
+            }
+            .futuristic-tag {
+                display: none;
+            }
+            .futuristic-divider {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" style="padding: 12px; min-height: 100vh; background: #0A0A0A;">
+    <div style="max-width: 1440px; margin: 0 auto;">
+        
+        <!-- ============================================
+             FUTURISTIC HEADER
+             ============================================ -->
+        <div class="futuristic-header">
+            <!-- Left: Title -->
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span class="futuristic-title">
+                    <span class="chevron">&lt;</span>
+                    <span class="bracket">[</span>
+                    AI_DIGITAL_TWIN
+                    <span class="bracket">]</span>
+                    <span class="chevron">&gt;</span>
+                </span>
+                <span class="futuristic-tag">v2.0</span>
+                <span class="futuristic-divider">|</span>
+                <span style="font-family: 'Orbitron', sans-serif; font-size: 9px; color: rgba(255, 107, 107, 0.4); letter-spacing: 2px; font-weight: 300;">
+                    // PREDICTIVE_MAINTENANCE
+                </span>
+            </div>
+
+            <!-- Right: Status -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="futuristic-tag" style="border-color: rgba(0, 212, 255, 0.2); color: rgba(0, 212, 255, 0.4);">
+                    ⚡ NEURAL_LINK
+                </span>
+                <span class="futuristic-divider" style="color: rgba(0, 212, 255, 0.1);">|</span>
+                <div class="futuristic-status">
+                    <span class="futuristic-dot" style="position: relative;"></span>
+                    <span class="futuristic-label">LIVE</span>
+                </div>
+                <span class="futuristic-divider" style="color: rgba(0, 212, 255, 0.1);">|</span>
+                <span class="futuristic-tag" style="border-color: rgba(0, 212, 255, 0.1); color: rgba(0, 212, 255, 0.3);">
+                    <span style="color: rgba(0, 212, 255, 0.2);">◉</span> 01:23:45
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Grid - MATLAB style -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 8px;">
+            
+            <!-- ============================================
+                 LEFT COLUMN: SENSORS
+                 ============================================ -->
+            <div class="matlab-panel">
+                <div class="matlab-header">📊 SENSOR INPUTS</div>
+                <div style="padding: 12px;">
+                    <div id="sensors" style="display: grid; gap: 6px;"></div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
+                        <button id="predictBtn" class="matlab-btn" style="grid-column: 1 / -1;">
+                            ▶ PREDICT
+                        </button>
+                    </div>
+                    <div id="statusMessage" style="font-size: 10px; color: #555; margin-top: 6px; text-align: center; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-weight: 400;"></div>
+                </div>
+            </div>
+
+            <!-- ============================================
+                 RIGHT COLUMN: RESULTS
+                 ============================================ -->
+            <div style="display: grid; gap: 8px;">
+                
+                <!-- BEARING VISUALIZATION + GAUGE -->
+                <div class="matlab-panel">
+                    <div class="matlab-header">🔧 BEARING HEALTH MONITOR</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; padding: 12px;">
+                        
+                        <!-- Left: Bearing SVG -->
+                        <div class="bearing-container" style="grid-column: 1;">
+                            <svg id="bearingSvg" class="bearing-svg" viewBox="0 0 200 220">
+                                <!-- Bearing components will be rendered by JavaScript -->
+                            </svg>
+                        </div>
+                        
+                        <!-- Right: Gauge Data -->
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;">
+                            <div id="gaugeEmoji" style="font-size: 28px;">✅</div>
+                            <div id="gaugeDays" class="day-number healthy">1000</div>
+                            <div class="day-label">Remaining Useful Life (Days)</div>
+                            <div id="gaugeStatus" class="status-badge healthy">HEALTHY</div>
+                            <div id="gaugeSimBadge" class="sim-badge" style="display: none;">⚡ SIMULATION MODE</div>
+                            
+                            <!-- Bar -->
+                            <div style="width: 100%; margin-top: 8px;">
+                                <div class="bar-track">
+                                    <div id="barFill" class="bar-fill" style="width: 100%; background: #3B82F6;"></div>
+                                </div>
+                                <div class="bar-labels">
+                                    <span>0</span>
+                                    <span>CRITICAL</span>
+                                    <span>WARNING</span>
+                                    <span>365</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREDICTION OUTPUT -->
+                <div id="predictionContainer" class="matlab-panel" style="display: none;">
+                    <div class="matlab-header">📋 PREDICTION OUTPUT</div>
+                    <div style="padding: 10px;">
+                        <div id="prediction" class="command-output"></div>
+                    </div>
+                </div>
+
+                <!-- SIMULATION CONTROLS -->
+                <div class="matlab-panel">
+                    <div class="matlab-header">⚡ LOAD SIMULATION</div>
+                    <div style="padding: 12px;">
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-weight: 600;">
+                                    <span>Load Increase</span>
+                                    <span id="loadPercent" style="color: #F59E0B;">20%</span>
+                                </div>
+                                <input type="range" id="loadSlider" min="0" max="50" value="20" style="width: 100%;">
+                            </div>
+                            <button id="simulateBtn" class="matlab-btn matlab-btn-sim" style="white-space: nowrap; padding: 6px 14px;">
+                                ▶ SIM
+                            </button>
+                        </div>
+                        <div style="font-size: 9px; color: #444; margin-top: 6px; text-align: center; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-weight: 400;">
+                            Simulates increased load impact on bearing life
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MATLAB-style Footer -->
+        <div class="matlab-panel" style="margin-top: 8px; padding: 4px 16px; display: flex; justify-content: space-between; font-size: 10px; color: #444; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-weight: 400;">
+            <span>© 2026 AI Digital Twin Project</span>
+            <span>Mechatronics Hackathon | 12-Hour Build</span>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+const sensorData = {
+    temperature: 65,
+    vibration: 0.8,
+    rpm: 1450,
+    pressure: 5.2,
+    load: 75,
+    maintenance_history: 30
+};
+
+let prediction = null;
+let isSimulation = false;
+let currentRUL = 30;
+
+// ============================================
+// SENSOR CONFIGURATION
+// ============================================
+const sensors = [
+    { key: 'temperature', label: 'TEMP', unit: '°C', icon: '🌡️', min: 0, max: 120, step: 0.1 },
+    { key: 'vibration', label: 'VIB', unit: 'm/s²', icon: '📳', min: 0, max: 5, step: 0.01 },
+    { key: 'rpm', label: 'RPM', unit: 'RPM', icon: '🔄', min: 0, max: 3000, step: 10 },
+    { key: 'pressure', label: 'PRESS', unit: 'bar', icon: '💨', min: 0, max: 10, step: 0.1 },
+    { key: 'load', label: 'LOAD', unit: '%', icon: '⚡', min: 0, max: 100, step: 1 },
+    { key: 'maintenance_history', label: 'MAINT', unit: 'days', icon: '🔧', min: 0, max: 365, step: 1 }
+];
+
+// ============================================
+// BEARING SVG RENDERER
+// ============================================
+function renderBearing(rul) {
+    const svg = document.getElementById('bearingSvg');
+    const health = Math.min(rul / 365, 1);
+    
+    // Determine color
+    let color, status;
+    if (health > 0.7) { color = '#3B82F6'; status = 'healthy'; }
+    else if (health > 0.3) { color = '#F59E0B'; status = 'warning'; }
+    else { color = '#DC2626'; status = 'critical'; }
+    
+    // Bearing dimensions
+    const cx = 100, cy = 100;
+    const outerR = 80, innerR = 45;
+    const ballR = 10;
+    const numBalls = 8;
+    
+    let balls = '';
+    for (let i = 0; i < numBalls; i++) {
+        const a = (i / numBalls) * 2 * Math.PI + (1 - health) * 0.5;
+        const bx = cx + 62 * Math.cos(a);
+        const by = cy + 62 * Math.sin(a);
+        const ballHealth = Math.max(0, health - (i / numBalls) * 0.3);
+        const ballColor = ballHealth > 0.6 ? '#3B82F6' : ballHealth > 0.3 ? '#F59E0B' : '#DC2626';
+        const ballSize = ballR * (0.5 + ballHealth * 0.5);
+        balls += `<circle cx="${bx}" cy="${by}" r="${ballSize}" fill="${ballColor}" opacity="${0.3 + ballHealth * 0.7}" stroke="#1A1A1A" stroke-width="1"/>`;
+    }
+    
+    svg.innerHTML = `
+        <!-- Outer ring -->
+        <circle cx="${cx}" cy="${cy}" r="${outerR}" fill="none" stroke="#2A2A2A" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="${outerR - 4}" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+        
+        <!-- Inner ring -->
+        <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="none" stroke="#2A2A2A" stroke-width="3"/>
+        <circle cx="${cx}" cy="${cy}" r="${innerR + 4}" fill="none" stroke="#1A1A1A" stroke-width="2"/>
+        
+        <!-- Bearing race damage -->
+        ${health < 0.5 ? `<circle cx="${cx}" cy="${cy}" r="${outerR - 10}" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="${4 + (1 - health) * 20}, 8" opacity="${0.3 + (1 - health) * 0.5}"/>` : ''}
+        ${health < 0.3 ? `<circle cx="${cx}" cy="${cy}" r="${innerR + 10}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="8, 12" opacity="0.6"/>` : ''}
+        
+        <!-- Balls -->
+        ${balls}
+        
+        <!-- Center dot -->
+        <circle cx="${cx}" cy="${cy}" r="8" fill="${color}" opacity="0.3"/>
+        <circle cx="${cx}" cy="${cy}" r="4" fill="${color}" opacity="0.6"/>
+        
+        <!-- Health indicator ring -->
+        <circle cx="${cx}" cy="${cy}" r="${outerR + 6}" fill="none" stroke="${color}" stroke-width="2" 
+                stroke-dasharray="${health * 2 * Math.PI * (outerR + 6) * 0.01}, ${2 * Math.PI * (outerR + 6)}" 
+                stroke-dashoffset="0" opacity="0.5"/>
+        
+        <!-- Status label -->
+        <text x="${cx}" y="${cy + 100}" text-anchor="middle" fill="#666" font-size="10" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="400">
+            RUL: ${Math.round(rul)} days
+        </text>
+        <text x="${cx}" y="${cy + 118}" text-anchor="middle" fill="${color}" font-size="9" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="700">
+            ${health > 0.7 ? '● OPERATIONAL' : health > 0.3 ? '● DEGRADING' : '● CRITICAL'}
+        </text>
+    `;
+}
+
+// ============================================
+// RENDER SENSORS
+// ============================================
+function renderSensors() {
+    const container = document.getElementById('sensors');
+    container.innerHTML = '';
+    
+    sensors.forEach(sensor => {
+        const card = document.createElement('div');
+        card.className = 'sensor-card';
+        card.style.display = 'grid';
+        card.style.gridTemplateColumns = 'auto 1fr auto';
+        card.style.gap = '8px';
+        card.style.alignItems = 'center';
+        card.innerHTML = `
+            <span style="font-size: 14px;">${sensor.icon}</span>
+            <span class="sensor-label">${sensor.label}</span>
+            <span class="sensor-value">
+                <span id="display_${sensor.key}">${sensorData[sensor.key]}</span>
+                <span class="sensor-unit">${sensor.unit}</span>
+            </span>
+            <input type="range" id="slider_${sensor.key}" min="${sensor.min}" max="${sensor.max}" 
+                   step="${sensor.step}" value="${sensorData[sensor.key]}" style="grid-column: 1 / -1;">
+        `;
+        container.appendChild(card);
+        
+        const slider = card.querySelector('input');
+        slider.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            sensorData[sensor.key] = value;
+            const display = document.getElementById(`display_${sensor.key}`);
+            if (display) display.textContent = value;
+        });
+    });
+}
+
+// ============================================
+// UPDATE GAUGE
+// ============================================
+function updateGauge(rul, status, isSim = false) {
+    currentRUL = rul;
+    const maxRUL = 365;
+    const percent = Math.min((rul / maxRUL) * 100, 100);
+    
+    // Update bar
+    const bar = document.getElementById('barFill');
+    if (bar) {
+        bar.style.width = percent + '%';
+        const color = status === 'Critical' ? '#DC2626' : status === 'Warning' ? '#F59E0B' : '#3B82F6';
+        bar.style.background = color;
+    }
+    
+    // Update emoji
+    const emoji = document.getElementById('gaugeEmoji');
+    if (emoji) {
+        emoji.textContent = status === 'Critical' ? '🚨' : status === 'Warning' ? '⚠️' : '✅';
+    }
+    
+    // Update day number
+    const days = document.getElementById('gaugeDays');
+    if (days) {
+        days.textContent = Math.round(rul);
+        days.className = `day-number ${status.toLowerCase()}`;
+    }
+    
+    // Update status badge
+    const badge = document.getElementById('gaugeStatus');
+    if (badge) {
+        badge.textContent = status;
+        badge.className = `status-badge ${status.toLowerCase()}`;
+    }
+    
+    // Simulation badge
+    const simBadge = document.getElementById('gaugeSimBadge');
+    if (simBadge) {
+        simBadge.style.display = isSim ? 'inline-block' : 'none';
+    }
+    
+    // Update bearing
+    renderBearing(rul);
+}
+
+// ============================================
+// SHOW PREDICTION
+// ============================================
+function showPrediction(data) {
+    const container = document.getElementById('predictionContainer');
+    container.style.display = 'block';
+    
+    const pred = document.getElementById('prediction');
+    const statusClass = data.status === 'Critical' ? 'error' : 
+                        data.status === 'Warning' ? 'warning-text' : 'success';
+    
+    pred.innerHTML = `
+        <div><span class="prompt">>></span> Prediction Result:</div>
+        <div style="margin-top: 4px;">
+            <span style="color: #E8E8E8;">Status:</span> 
+            <span class="${statusClass}" style="font-weight: 700;">${data.status.toUpperCase()}</span>
+            ${data.isSimulation ? '<span style="color: #F59E0B; margin-left: 8px;">[SIMULATION]</span>' : ''}
+        </div>
+        <div style="margin-top: 2px;">
+            <span style="color: #E8E8E8;">RUL:</span> 
+            <span style="color: #8BB8E8; font-weight: 700;">${Math.round(data.rul_days)} days</span>
+        </div>
+        <div style="margin-top: 4px; color: #888; font-size: 11px;">
+            ${data.message}
+        </div>
+    `;
+}
+
+// ============================================
+// API CALLS
+// ============================================
+async function predict() {
+    const btn = document.getElementById('predictBtn');
+    const statusMsg = document.getElementById('statusMessage');
+    btn.innerHTML = '⏳ RUNNING...';
+    btn.disabled = true;
+    statusMsg.textContent = 'Connecting to backend...';
+    statusMsg.style.color = '#666';
+    
+    try {
+        const response = await fetch('http://localhost:8000/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sensorData)
+        });
+        
+        if (!response.ok) throw new Error('API error');
+        const data = await response.json();
+        prediction = data;
+        isSimulation = false;
+        updateGauge(data.rul_days, data.status, false);
+        showPrediction(data);
+        statusMsg.textContent = '✓ Prediction complete';
+        statusMsg.style.color = '#4AAC4A';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        statusMsg.textContent = '⚠ Backend offline - using demo data';
+        statusMsg.style.color = '#F59E0B';
+        
+        const demoPredictions = [
+            { rul: 18, status: 'Warning', message: 'Bearing failure likely within 18 days' },
+            { rul: 45, status: 'Healthy', message: 'Bearing condition is good' },
+            { rul: 8, status: 'Critical', message: 'Bearing failure imminent! Schedule maintenance immediately' },
+            { rul: 23, status: 'Warning', message: 'Bearing showing signs of wear' },
+        ];
+        const demo = demoPredictions[Math.floor(Math.random() * demoPredictions.length)];
+        prediction = demo;
+        isSimulation = false;
+        updateGauge(demo.rul, demo.status, false);
+        showPrediction(demo);
+        
+    } finally {
+        btn.innerHTML = '▶ PREDICT';
+        btn.disabled = false;
+    }
+}
+
+async function simulate() {
+    const loadIncrease = parseInt(document.getElementById('loadSlider').value) / 100;
+    const btn = document.getElementById('simulateBtn');
+    const statusMsg = document.getElementById('statusMessage');
+    btn.innerHTML = '⏳ RUNNING...';
+    btn.disabled = true;
+    statusMsg.textContent = 'Running simulation...';
+    statusMsg.style.color = '#666';
+    
+    try {
+        const response = await fetch('http://localhost:8000/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...sensorData, load_increase: loadIncrease })
+        });
+        
+        if (!response.ok) throw new Error('API error');
+        const data = await response.json();
+        data.isSimulation = true;
+        prediction = data;
+        isSimulation = true;
+        updateGauge(data.rul_days, data.status, true);
+        showPrediction(data);
+        statusMsg.textContent = `✓ Simulation complete (+${Math.round(loadIncrease * 100)}% load)`;
+        statusMsg.style.color = '#4AAC4A';
+        
+    } catch (error) {
+        console.error('Error:', error);
+        statusMsg.textContent = '⚠ Backend offline - using demo simulation';
+        statusMsg.style.color = '#F59E0B';
+        
+        const currentRul = prediction?.rul_days || 30;
+        const newRul = Math.max(currentRul * (1 - loadIncrease * 1.5), 1);
+        const demo = {
+            rul_days: newRul,
+            status: newRul < 7 ? 'Critical' : newRul < 30 ? 'Warning' : 'Healthy',
+            message: `Bearing failure likely within ${Math.round(newRul)} days (simulated +${Math.round(loadIncrease * 100)}% load)`,
+            isSimulation: true
+        };
+        prediction = demo;
+        isSimulation = true;
+        updateGauge(demo.rul_days, demo.status, true);
+        showPrediction(demo);
+        
+    } finally {
+        btn.innerHTML = '▶ SIM';
+        btn.disabled = false;
+    }
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    renderSensors();
+    
+    document.getElementById('predictBtn').addEventListener('click', predict);
+    document.getElementById('simulateBtn').addEventListener('click', simulate);
+    
+    document.getElementById('loadSlider').addEventListener('input', function() {
+        document.getElementById('loadPercent').textContent = this.value + '%';
+    });
+    
+    // Initial state
+    setTimeout(() => {
+        updateGauge(30, 'Warning', false);
+        const statusMsg = document.getElementById('statusMessage');
+        statusMsg.textContent = 'Ready. Click PREDICT to begin.';
+        statusMsg.style.color = '#555';
+        
+        // Initial bearing render
+        renderBearing(30);
+    }, 500);
+});
+
+console.log('🚀 AI Digital Twin loaded!');
+console.log('📊 Sensor Data:', sensorData);
+console.log('💡 Click PREDICT to start');
+</script>
+
+</body>
+</html>
